@@ -245,3 +245,380 @@ function App() {
 }
 
 export default App;
+
+Why we use react?
+------------------
+We use React to build fast, dynamic, and reusable user interfaces efficiently. It uses a component-based structure and a Virtual DOM to update only what’s needed, making web apps faster and easier to manage.
+
+What is vite? why vite is better than create react app?
+---------------------------------------------------------
+
+Vite is a fast, modern build tool that helps you develop front-end apps quickly. It’s better than Create React App (CRA) because it offers much faster startup and build times, uses native ES modules, and provides instant hot reloads — making development smoother and more efficient.
+
+
+Shopping cart app
+-------------------
+App.jsx
+---------
+import React, { useState } from "react";
+
+const products = [
+  { id: 1, name: "Laptop", price: 999 },
+  { id: 2, name: "Phone", price: 599 },
+  { id: 3, name: "Headphones", price: 199 },
+];
+
+
+function ProductList({ products, addToCart }) {
+  return (
+    <div>
+      <h2>Products</h2>
+      {products.map((product) => (
+        <div key={product.id} style={{ marginBottom: "10px" }}>
+          <span>
+            {product.name} - ${product.price}
+          </span>
+          <button
+            onClick={() => addToCart(product)}
+            style={{ marginLeft: "10px" }}
+          >
+            Add to Cart
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
+function CartItem({ item, addQty, removeQty, removeItem }) {
+  return (
+    <div style={{ marginBottom: "10px" }}>
+      <span>
+        {item.name} - ${item.price} × {item.quantity} = $
+        {item.price * item.quantity}
+      </span>
+      <button onClick={() => addQty(item.id)} style={{ marginLeft: "10px" }}>
+        +
+      </button>
+      <button onClick={() => removeQty(item.id)} style={{ marginLeft: "5px" }}>
+        -
+      </button>
+      <button
+        onClick={() => removeItem(item.id)}
+        style={{ marginLeft: "10px" }}
+      >
+        Remove
+      </button>
+    </div>
+  );
+}
+
+
+function CartSummary({ cart }) {
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPrice = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+
+  return (
+    <div>
+      <h3>Cart Summary</h3>
+      <p>Total Items: {totalItems}</p>
+      <p>Total Price: ${totalPrice}</p>
+    </div>
+  );
+}
+
+
+
+export default function App() {
+  const [cart, setCart] = useState([]);
+
+  const addToCart = (product) => {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
+      if (existing) {
+        return prev.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      } else {
+        return [...prev, { ...product, quantity: 1 }];
+      }
+    });
+  };
+
+  const addQty = (id) => {
+    setCart((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
+      )
+    );
+  };
+
+  const removeQty = (id) => {
+    setCart((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, quantity: Math.max(item.quantity - 1, 1) }
+          : item
+      )
+    );
+  };
+
+  const removeItem = (id) => {
+    setCart((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  return (
+    <div style={{ padding: "20px" }}>
+      <h1>🛒 Simple Shopping Cart</h1>
+      <ProductList products={products} addToCart={addToCart} />
+
+      <h2>Your Cart</h2>
+      {cart.length === 0 ? (
+        <p>No items in cart</p>
+      ) : (
+        cart.map((item) => (
+          <CartItem
+            key={item.id}
+            item={item}
+            addQty={addQty}
+            removeQty={removeQty}
+            removeItem={removeItem}
+          />
+        ))
+      )}
+
+      <CartSummary cart={cart} />
+    </div>
+  );
+}
+
+main.jsx
+-----------
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App.jsx"; 
+
+createRoot(document.getElementById("root")).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+
+Mini Greeting App
+-------------------
+App.jsx
+---------
+import React, { useState } from "react";
+
+export default function App() {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    terms: false,
+    profilePic: null,
+  });
+
+  const [errors, setErrors] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+
+
+  const validate = (name, value) => {
+    let error = "";
+
+    switch (name) {
+      case "name":
+        if (value.trim().length < 2) error = "Name must be at least 2 characters";
+        break;
+      case "email":
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+          error = "Enter a valid email address";
+        break;
+      case "password":
+        if (value.length < 8)
+          error = "Password must be at least 8 characters long";
+        break;
+      case "confirmPassword":
+        if (value !== form.password)
+          error = "Passwords do not match";
+        break;
+      default:
+        break;
+    }
+
+    setErrors((prev) => ({ ...prev, [name]: error }));
+  };
+
+
+  const handleChange = (e) => {
+    const { name, value, type, checked, files } = e.target;
+    const fieldValue =
+      type === "checkbox" ? checked : type === "file" ? files[0] : value;
+
+    setForm((prev) => ({ ...prev, [name]: fieldValue }));
+
+    if (name !== "profilePic" && name !== "terms") {
+      validate(name, fieldValue);
+    }
+  };
+
+ 
+  const getPasswordStrength = () => {
+    const { password } = form;
+    if (!password) return "";
+    if (password.length < 8) return "Weak 🔴";
+    if (/[A-Z]/.test(password) && /\d/.test(password)) return "Strong 🟢";
+    return "Medium 🟠";
+  };
+
+ 
+  const isFormValid =
+    form.name.length >= 2 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) &&
+    form.password.length >= 8 &&
+    form.password === form.confirmPassword &&
+    form.terms;
+
+  
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (isFormValid) {
+      setSubmitted(true);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <div style={{ padding: "20px", textAlign: "center" }}>
+        <h2>🎉 Registration Successful!</h2>
+        <p>Welcome, {form.name}!</p>
+        {form.profilePic && (
+          <img
+            src={URL.createObjectURL(form.profilePic)}
+            alt="Profile"
+            style={{ width: "100px", height: "100px", borderRadius: "50%" }}
+          />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ maxWidth: "400px", margin: "40px auto", fontFamily: "Arial" }}>
+      <h1>📝 Mini Greeting App</h1>
+      <form onSubmit={handleSubmit}>
+        {/* Name */}
+        <label>Name:</label>
+        <input
+          type="text"
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          onBlur={(e) => validate(e.target.name, e.target.value)}
+          style={{ width: "100%", marginBottom: "5px" }}
+        />
+        {errors.name && <p style={{ color: "red" }}>{errors.name}</p>}
+
+        {/* Email */}
+        <label>Email:</label>
+        <input
+          type="email"
+          name="email"
+          value={form.email}
+          onChange={handleChange}
+          onBlur={(e) => validate(e.target.name, e.target.value)}
+          style={{ width: "100%", marginBottom: "5px" }}
+        />
+        {errors.email && <p style={{ color: "red" }}>{errors.email}</p>}
+
+        {/* Password */}
+        <label>Password:</label>
+        <input
+          type="password"
+          name="password"
+          value={form.password}
+          onChange={handleChange}
+          onBlur={(e) => validate(e.target.name, e.target.value)}
+          style={{ width: "100%", marginBottom: "5px" }}
+        />
+        {errors.password && <p style={{ color: "red" }}>{errors.password}</p>}
+        {form.password && <p>Password Strength: {getPasswordStrength()}</p>}
+
+        {/* Confirm Password */}
+        <label>Confirm Password:</label>
+        <input
+          type="password"
+          name="confirmPassword"
+          value={form.confirmPassword}
+          onChange={handleChange}
+          onBlur={(e) => validate(e.target.name, e.target.value)}
+          style={{ width: "100%", marginBottom: "5px" }}
+        />
+        {errors.confirmPassword && (
+          <p style={{ color: "red" }}>{errors.confirmPassword}</p>
+        )}
+
+        {/* Profile Picture */}
+        <label>Profile Picture:</label>
+        <input
+          type="file"
+          name="profilePic"
+          accept="image/*"
+          onChange={handleChange}
+          style={{ width: "100%", marginBottom: "10px" }}
+        />
+
+        {/* Terms and Conditions */}
+        <label>
+          <input
+            type="checkbox"
+            name="terms"
+            checked={form.terms}
+            onChange={handleChange}
+          />
+          I agree to the terms and conditions
+        </label>
+        <br />
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={!isFormValid}
+          style={{
+            marginTop: "10px",
+            width: "100%",
+            padding: "8px",
+            backgroundColor: isFormValid ? "#4CAF50" : "#ccc",
+            color: "white",
+            border: "none",
+            cursor: isFormValid ? "pointer" : "not-allowed",
+          }}
+        >
+          Register
+        </button>
+      </form>
+    </div>
+  );
+}
+
+
+main.jsx
+---------
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App.jsx"; 
+
+createRoot(document.getElementById("root")).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
